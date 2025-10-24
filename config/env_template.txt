@@ -1,0 +1,38 @@
+# Environment configuration template for Drone Swarm Simulator
+# Copy to a local .env file during development and keep secrets out of source control.
+
+# MAPBOX_ACCESS_TOKEN controls access to tile services consumed by MapLibre GL Native.
+# Populate with a valid token in your local .env file; this placeholder prevents accidental check-in of secrets.
+MAPBOX_ACCESS_TOKEN=__REQUIRED_SET_IN_ENV__
+
+# DRONE_SIM_LOG_LEVEL sets the minimum log level (trace, debug, info, warn, error).
+# Default: info
+DRONE_SIM_LOG_LEVEL=info
+
+# DRONE_SIM_LOG_DIR defines where structured logs are written.
+# Default: logs
+DRONE_SIM_LOG_DIR=logs
+
+# DRONE_SIM_TILE_PROVIDER selects the tile service (mapbox | maplibre_demo).
+# Default: mapbox
+DRONE_SIM_TILE_PROVIDER=mapbox
+
+# DRONE_SIM_UPDATE_HZ configures the simulation update cadence.
+# Default: 1 (one update per second)
+DRONE_SIM_UPDATE_HZ=1
+
+# DRONE_SIM_REGION_RADIUS_M sets the simulation region radius in meters.
+# Default: 5000
+DRONE_SIM_REGION_RADIUS_M=5000
+
+# DRONE_SIM_OVERWATCH_HEIGHT_M sets default overwatch altitude in meters.
+# Default: 1500
+DRONE_SIM_OVERWATCH_HEIGHT_M=1500
+
+# DRONE_SIM_OVERWATCH_COVERAGE_M configures overwatch coverage radius in meters.
+# Default: 6000
+DRONE_SIM_OVERWATCH_COVERAGE_M=6000
+
+# DRONE_SIM_MAX_RETRIES defines retry attempts for transient orchestrator tasks.
+# Default: 3
+DRONE_SIM_MAX_RETRIES=3

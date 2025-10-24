@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Drone Swarm (Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/apps/simulator/drone_swarm_app",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "MAPBOX_ACCESS_TOKEN",
+                    "value": "${env:MAPBOX_ACCESS_TOKEN}"
+                },
+                {
+                    "name": "DRONE_SIM_TILE_PROVIDER",
+                    "value": "${env:DRONE_SIM_TILE_PROVIDER}"
+                },
+                {
+                    "name": "DRONE_SIM_LOG_LEVEL",
+                    "value": "${env:DRONE_SIM_LOG_LEVEL}"
+                }
+            ],
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "miDebuggerPath": "/usr/bin/lldb",
+            "preLaunchTask": "CMake: Build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for LLDB",
+                    "text": "settings set target import-std-module true"
+                }
+            ]
+        }
+    ]
+}
