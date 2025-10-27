@@ -54,6 +54,4 @@ target_link_libraries(
 
 enable_project_warnings(drone_swarm_lib)
 
-target_compile_definitions(drone_swarm_lib PRIVATE SPDLOG_FMT_EXTERNAL=0)
-
 target_compile_features(drone_swarm_lib PUBLIC cxx_std_23)

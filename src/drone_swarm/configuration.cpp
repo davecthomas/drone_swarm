@@ -75,7 +75,7 @@ Configuration ConfigurationLoader::load(const std::filesystem::path&) {
     config.mapbox_token = load_mapbox_token(requires_mapbox_token);
     config.update_hz = load_update_hz();
 
-    config.orchestrator.region_center = GeodeticCoordinate{37.7749, -122.4194, 0.0};
+    config.orchestrator.region_center = GeodeticCoordinate{32.7473, -117.1661, 30.0};
     config.orchestrator.region_radius_m = parse_double(std::getenv("DRONE_SIM_REGION_RADIUS_M"), k_default_region_radius_m);
     config.orchestrator.update_interval = Duration{1.0 / config.update_hz};
     config.orchestrator.overwatch_height_m = parse_double(std::getenv("DRONE_SIM_OVERWATCH_HEIGHT_M"), k_default_overwatch_height_m);

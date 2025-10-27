@@ -7,11 +7,17 @@
 
 namespace drone_swarm {
 
+namespace {
+constexpr double k_altitude_hold_ratio{0.5}; /**< Fraction of envelope span used as nominal cruise altitude. */
+}
+
 DroneAircraft::DroneAircraft(
     std::string identifier,
     VehicleKinematics kinematics,
     FlightEnvelope envelope,
     GeodeticCoordinate initial_location,
+    GeodeticCoordinate base_location,
+    PowertrainModel powertrain_model,
     double battery_capacity_wh,
     double consumption_wh_per_m,
     CameraFeedList camera_feeds
@@ -20,6 +26,8 @@ DroneAircraft::DroneAircraft(
           std::move(identifier),
           kinematics,
           initial_location,
+          base_location,
+          powertrain_model,
           battery_capacity_wh,
           consumption_wh_per_m,
           std::move(camera_feeds)
@@ -30,8 +38,11 @@ DroneAircraft::DroneAircraft(
     }
 }
 
+/**
+ * @brief Clamp altitude changes so the drone stays within its certified envelope.
+ */
 void DroneAircraft::apply_vehicle_specific_constraints(DroneState& mutable_state, const Duration& tick) {
-    const double desired_altitude = envelope_.min_altitude_m + (envelope_.max_altitude_m - envelope_.min_altitude_m) * 0.5;
+    const double desired_altitude = envelope_.min_altitude_m + (envelope_.max_altitude_m - envelope_.min_altitude_m) * k_altitude_hold_ratio;
     const double altitude_error = desired_altitude - mutable_state.location.altitude_m;
     const double max_delta = envelope_.max_climb_rate_mps * tick.count();
     const double limited_delta = std::clamp(altitude_error, -max_delta, max_delta);
@@ -40,12 +51,6 @@ void DroneAircraft::apply_vehicle_specific_constraints(DroneState& mutable_state
         envelope_.min_altitude_m,
         envelope_.max_altitude_m
     );
-
-    if (mutable_state.battery_percent <= 5.0) {
-        mutable_state.status = VehicleStatus::ReturningHome;
-        auto logger = get_logger();
-        logger->warn("Drone {} battery critically low; forcing return", mutable_state.identifier);
-    }
 }
 
 }  // namespace drone_swarm

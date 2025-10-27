@@ -5,12 +5,15 @@
 namespace drone_swarm {
 
 namespace {
-constexpr char k_mapbox_style_url[] = "mapbox://styles/mapbox/satellite-streets-v12";
-constexpr char k_maplibre_demo_style_url[] = "https://demotiles.maplibre.org/style.json";
-constexpr char k_mapbox_cache_name[] = "mapbox_cache.db";
-constexpr char k_maplibre_cache_name[] = "maplibre_cache.db";
+constexpr char k_mapbox_style_url[] = "mapbox://styles/mapbox/satellite-streets-v12"; /**< Default Mapbox style blending raster imagery with overlays. */
+constexpr char k_maplibre_demo_style_url[] = "https://demotiles.maplibre.org/style.json"; /**< Public MapLibre demo style for offline runs. */
+constexpr char k_mapbox_cache_name[] = "mapbox_cache.db"; /**< Cache filename when using Mapbox tiles. */
+constexpr char k_maplibre_cache_name[] = "maplibre_cache.db"; /**< Cache filename when using the MapLibre demo tiles. */
 }
 
+/**
+ * @brief Build a tile service descriptor for the requested provider.
+ */
 TileServiceDescriptor make_tile_service_descriptor(TileProviderType provider, const std::string& mapbox_token) {
     TileServiceDescriptor descriptor{};
 

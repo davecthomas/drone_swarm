@@ -7,6 +7,12 @@
 namespace drone_swarm {
 
 namespace {
+
+constexpr double k_state_stale_threshold_s{5.0}; /**< Time in seconds after which telemetry is considered stale. */
+
+/**
+ * @brief Calculate the great-circle distance between two coordinates.
+ */
 double haversine_distance_m(const GeodeticCoordinate& from, const GeodeticCoordinate& to) {
     constexpr double k_earth_radius_m{6'371'000.0};
     const auto to_radians = [](double degrees) {
@@ -31,26 +37,44 @@ OverwatchNode::OverwatchNode(std::string identifier, GeodeticCoordinate position
       coverage_radius_m_(coverage_radius_m),
       altitude_m_(altitude_m) {}
 
+/**
+ * @brief Return the node identifier.
+ */
 const std::string& OverwatchNode::identifier() const noexcept {
     return str_identifier_;
 }
 
+/**
+ * @brief Provide the node's fixed world position.
+ */
 const GeodeticCoordinate& OverwatchNode::position() const noexcept {
     return position_;
 }
 
+/**
+ * @brief Report the radius within which this node expects coverage.
+ */
 double OverwatchNode::coverage_radius_m() const noexcept {
     return coverage_radius_m_;
 }
 
+/**
+ * @brief Return the node altitude above MSL.
+ */
 double OverwatchNode::altitude_m() const noexcept {
     return altitude_m_;
 }
 
+/**
+ * @brief Record the most recent telemetry broadcast by a vehicle.
+ */
 void OverwatchNode::ingest_telemetry(const TelemetryEvent& event) {
     map_vehicle_states_[event.state.identifier] = event.state;
 }
 
+/**
+ * @brief Retrieve the last known state for a vehicle if available.
+ */
 std::optional<DroneState> OverwatchNode::latest_state_for(const std::string& vehicle_id) const {
     const auto iterator_state = map_vehicle_states_.find(vehicle_id);
     if (iterator_state == map_vehicle_states_.end()) {
@@ -59,6 +83,9 @@ std::optional<DroneState> OverwatchNode::latest_state_for(const std::string& veh
     return iterator_state->second;
 }
 
+/**
+ * @brief Evaluate whether any tracked vehicles have fallen outside coverage.
+ */
 CoverageSummary OverwatchNode::coverage_status(TimePoint now) const {
     bool gap_detected = false;
     for (const auto& [vehicle_id, state] : map_vehicle_states_) {
@@ -68,7 +95,7 @@ CoverageSummary OverwatchNode::coverage_status(TimePoint now) const {
             break;
         }
         const Duration staleness = now - state.last_update_time;
-        if (staleness.count() > 5.0) {
+        if (staleness.count() > k_state_stale_threshold_s) {
             gap_detected = true;
             break;
         }

@@ -7,7 +7,6 @@
 #include <mbgl/gl/renderable_resource.hpp>
 #include <mbgl/gl/renderer_backend.hpp>
 #include <mbgl/map/camera.hpp>
-#include <mbgl/map/edge_insets.hpp>
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/map_options.hpp>
 #include <mbgl/map/map_observer.hpp>
@@ -46,6 +45,8 @@ constexpr double kSanDiegoLatitude = 32.715736;
 constexpr double kSanDiegoLongitude = -117.161087;
 constexpr double kSanDiegoCoverageMiles = 50.0;
 constexpr double kMilesToMeters = 1609.344;
+constexpr double kDefaultCameraInsetPx = 40.0;    /**< Padding applied when fitting the initial camera view. */
+constexpr double kDefaultCameraPitchDeg = 45.0;   /**< Default pitch used for the overwatch perspective. */
 constexpr char kDroneSourceId[] = "drone-vehicles";
 constexpr char kDroneLayerId[] = "drone-vehicles-layer";
 
@@ -146,14 +147,13 @@ class DroneGLBackend final : public mbgl::gl::RendererBackend, public mbgl::gfx:
 
     ~DroneGLBackend() override = default;
 
-    mbgl::gfx::RendererBackend& getRendererBackend() override { return *this; }
     mbgl::gfx::Renderable& getDefaultRenderable() override { return *this; }
 
-    mbgl::Size getSize() const override {
+    mbgl::Size getSize() const {
         return size;
     }
 
-    void setSize(const mbgl::Size new_size) override {
+    void setSize(const mbgl::Size new_size) {
         size = new_size;
     }
 
@@ -423,9 +423,9 @@ void RenderingPipeline::map_thread_entry() {
         const mbgl::LatLngBounds bounds = san_diego_bounds();
         const mbgl::CameraOptions camera = map.cameraForLatLngBounds(
             bounds,
-            mbgl::EdgeInsets{40.0, 40.0, 40.0, 40.0},
+            mbgl::EdgeInsets{kDefaultCameraInsetPx, kDefaultCameraInsetPx, kDefaultCameraInsetPx, kDefaultCameraInsetPx},
             std::nullopt,
-            45.0
+            kDefaultCameraPitchDeg
         );
         map.jumpTo(camera);
 
@@ -477,12 +477,12 @@ void RenderingPipeline::apply_drone_states_on_map(mbgl::Map& map, const std::vec
         collection.push_back(feature_from_state(state));
     }
 
-    auto* source = map.getStyle().getSourceAs<mbgl::style::GeoJSONSource>(kDroneSourceId);
-    if (source == nullptr) {
-        mbgl::style::GeoJSONOptions source_options;
-        auto geojson_source = std::make_unique<mbgl::style::GeoJSONSource>(kDroneSourceId, source_options);
-        geojson_source->setGeoJSON(collection);
-        map.getStyle().addSource(std::move(geojson_source));
+    mbgl::style::Source* existing_source = map.getStyle().getSource(kDroneSourceId);
+    auto* geojson_source = existing_source ? existing_source->as<mbgl::style::GeoJSONSource>() : nullptr;
+    if (geojson_source == nullptr) {
+        auto new_geojson_source = std::make_unique<mbgl::style::GeoJSONSource>(kDroneSourceId);
+        new_geojson_source->setGeoJSON(collection);
+        map.getStyle().addSource(std::move(new_geojson_source));
 
         auto layer = std::make_unique<mbgl::style::CircleLayer>(kDroneLayerId, kDroneSourceId);
         layer->setCircleRadius(8.0f);
@@ -492,7 +492,7 @@ void RenderingPipeline::apply_drone_states_on_map(mbgl::Map& map, const std::vec
         layer->setCircleStrokeColor(mbgl::Color{0.02f, 0.21f, 0.35f, 1.0f});
         map.getStyle().addLayer(std::move(layer));
     } else {
-        source->setGeoJSON(collection);
+        geojson_source->setGeoJSON(collection);
     }
 }
 

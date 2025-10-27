@@ -4,9 +4,9 @@
 #include <chrono>
 #include <functional>
 #include <numbers>
+#include <string>
 #include <thread>
 
-#include <fmt/format.h>
 #include "drone_swarm/logging.hpp"
 
 namespace drone_swarm {
@@ -50,8 +50,9 @@ OverwatchOrchestrator::OverwatchOrchestrator(std::string name, OrchestratorConfi
         const double bearing = index * sector_angle;
         GeodeticCoordinate position = offset_coordinate(config_.region_center, bearing, config_.region_radius_m / 2.0);
         position.altitude_m = config_.overwatch_height_m;
+        std::string node_identifier = str_name_ + "-node-" + std::to_string(index);
         auto node = std::make_shared<OverwatchNode>(
-            fmt::format("{}-node-{}", str_name_, index),
+            std::move(node_identifier),
             position,
             config_.overwatch_coverage_m,
             config_.overwatch_height_m
@@ -78,12 +79,8 @@ void OverwatchOrchestrator::update(TimePoint now) {
 
     for (const auto& node : list_overwatch_nodes_) {
         const CoverageSummary summary = node->coverage_status(now);
-        logger_->info(
-            R"({"component":"overwatch","node":"{}","gap":{},"radius_m":{}})",
-            node->identifier(),
-            summary.gap_detected ? "true" : "false",
-            summary.coverage_radius_m
-        );
+        logger_->info("overwatch node={} gap_detected={} radius_m={}",
+                      node->identifier(), summary.gap_detected, summary.coverage_radius_m);
     }
 }
 
@@ -116,11 +113,8 @@ void OverwatchOrchestrator::reposition_for_gaps() {
         }
         GeodeticCoordinate adjusted_position = node->position();
         adjusted_position.altitude_m += 50.0;
-        logger_->warn(
-            R"({"component":"overwatch","node":"{}","action":"adjust_altitude","altitude_m":{}})",
-            node->identifier(),
-            adjusted_position.altitude_m
-        );
+        logger_->warn("overwatch node={} adjust_altitude altitude_m={}",
+                       node->identifier(), adjusted_position.altitude_m);
         repositioned = true;
         break;
     }
@@ -137,12 +131,8 @@ void OverwatchOrchestrator::retry_if_needed(const std::function<void()>& operati
             operation();
             return;
         } catch (const std::exception& exc) {
-            logger_->error(
-                R"({"component":"orchestrator","operation":"{}","attempt":{},"error":"{}"})",
-                operation_name,
-                attempt,
-                exc.what()
-            );
+            logger_->error("orchestrator operation={} attempt={} error={}",
+                           operation_name, attempt, exc.what());
             if (attempt == config_.max_retries) {
                 throw;
             }

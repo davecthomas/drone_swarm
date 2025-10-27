@@ -105,6 +105,11 @@
 - Ensure diagrams reflect the current architecture, including new layers introduced during development.
 - Prefer concise node names and keep arrow annotations short to preserve readability in the VS Code plugin.
 
+## **Magic numbers & commentary**
+
+- Never introduce unexplained numeric literals. Declare named constants or derive values from configuration so that intent is obvious and future changes are localized.
+- Document every module, class, method, property, third-party API invocation, and non-trivial calculation with comments that explain purpose, assumptions, and trade-offs. Comments must focus on “why” rather than restating code.
+
 ## **Versioning**
 
 - Bump semantic versions whenever observable behavior, public APIs, or configuration inputs change. Update the version in `CMakeLists.txt`, `include/<project_name>/version.hpp`, and `README.md`.

@@ -161,6 +161,7 @@ ctest --output-on-failure --test-dir build
 
 - VS Code users can leverage the bundled tasks (`⇧⌘B`) for configure/build/test/clean. IntelliSense reads `build/compile_commands.json` automatically via the CMake Tools extension.
 - Regenerate the compile database after changing CMake options: rerun the configure task or `cmake -S . -B build`.
+- When you need a fully fresh tree (cache + dependencies), run `cmake --build build --target distclean` and then reconfigure; this removes `_deps`, cached CMake files, and generated binaries.
 
 ### Logs & Caches
 

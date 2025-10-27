@@ -1,9 +1,17 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
+#include "logging_test_fixture.hpp"
 #include "drone_swarm/autonomous_vehicle.hpp"
 #include "drone_swarm/telemetry_bus.hpp"
 
 using namespace drone_swarm;
+
+namespace {
+[[maybe_unused]] const bool logger_initialized = []() {
+    drone_swarm::test::ensure_logger_initialized();
+    return true;
+}();
+}  // namespace
 
 TEST_CASE("AutonomousVehicle publishes telemetry with updated state") {
     VehicleKinematics kinematics{};
@@ -12,10 +20,18 @@ TEST_CASE("AutonomousVehicle publishes telemetry with updated state") {
     kinematics.turn_rate_deg_per_s = 5.0;
 
     CameraFeedList camera_feeds{};
+    PowertrainModel powertrain{};
+    powertrain.base_reserve_percent = 5.0;
+    powertrain.reserve_percent_per_meter = 0.0001;
+    powertrain.reserve_percent_per_second = 0.0005;
+    powertrain.minimum_return_speed_mps = 5.0;
+
     auto vehicle = std::make_shared<AutonomousVehicle>(
         "vehicle-test",
         kinematics,
         GeodeticCoordinate{0.0, 0.0, 0.0},
+        GeodeticCoordinate{0.0, 0.0, 0.0},
+        powertrain,
         100.0,
         0.1,
         camera_feeds

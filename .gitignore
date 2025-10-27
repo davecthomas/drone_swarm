@@ -1,5 +1,6 @@
 # Build artefacts
 /build/
+/build*
 /build-*/*
 /cmake-build-*/
 /out/
