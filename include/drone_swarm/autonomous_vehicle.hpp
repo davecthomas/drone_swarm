@@ -1,3 +1,10 @@
+// === Autonomous Vehicle ======================================================
+//
+// Declares the core AutonomousVehicle abstraction used throughout the
+// simulation. The type encapsulates navigation state, mission waypoints,
+// battery model, and mounted sensors. Derived classes can extend the base with
+// platform-specific behavior (e.g., airframe constraints).
+
 #pragma once
 
 #include <memory>
@@ -21,7 +28,7 @@ struct VehicleKinematics final {
 };
 
 /**
- * @brief Base class implementing shared behaviour for autonomous vehicles.
+ * @brief Base class implementing shared behavior for autonomous vehicles.
  */
 class AutonomousVehicle : public std::enable_shared_from_this<AutonomousVehicle> {
   public:
@@ -50,25 +57,43 @@ class AutonomousVehicle : public std::enable_shared_from_this<AutonomousVehicle>
 
     virtual ~AutonomousVehicle() = default;
 
+    /** @brief Unique identifier used in logs and telemetry topics. */
     [[nodiscard]] const std::string& identifier() const noexcept;
+    /** @brief Latest published drone state. */
     [[nodiscard]] const DroneState& state() const noexcept;
+    /** @brief Vehicle dynamics envelope used by guidance. */
     [[nodiscard]] const VehicleKinematics& kinematics() const noexcept;
+    /** @brief Maximum energy capacity in watt-hours. */
     [[nodiscard]] double battery_capacity_wh() const noexcept;
+    /** @brief Camera feeds installed on the vehicle. */
     [[nodiscard]] const CameraFeedList& camera_feeds() const noexcept;
 
+    /** @brief Replace the mission waypoint queue. */
     void set_waypoints(std::vector<Waypoint> waypoints);
+    /** @brief Advance the simulation by @p tick and publish telemetry. */
     void update(const Duration& tick, TelemetryBus& bus);
 
   protected:
+    /**
+     * @brief Hook for derived classes to enforce platform-specific constraints
+     *        (e.g., climb rates for fixed-wing aircraft).
+     */
     virtual void apply_vehicle_specific_constraints(DroneState& mutable_state, const Duration& tick);
 
   private:
+    /** @brief Integrate vehicle kinematics forward one tick. */
     void update_navigation(const Duration& tick);
+    /** @brief Update battery estimates using the powertrain model. */
     void update_battery(const Duration& tick);
+    /** @brief Send the new state onto the telemetry bus. */
     void publish_state(TelemetryBus& bus);
+    /** @brief Placeholder for future collision avoidance integration. */
     void maintain_collision_avoidance();
+    /** @brief Compute required battery reserve to safely return to base. */
     double calculate_return_reserve_percent() const;
+    /** @brief Switch into the low power return state. */
     void initiate_low_power_return();
+    /** @brief Guarantee the final waypoint returns to the base location. */
     void ensure_return_waypoint();
 
     std::string str_identifier_;

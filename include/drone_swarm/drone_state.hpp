@@ -1,3 +1,8 @@
+// === Drone State =============================================================
+//
+// Struct containing the telemetry snapshot published by vehicles and consumed
+// by the telemetry bus, overwatch mesh, and rendering pipeline.
+
 #pragma once
 
 #include <chrono>

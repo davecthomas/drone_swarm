@@ -1,3 +1,8 @@
+// === Core Types ==============================================================
+//
+// Collects shared type aliases and lightweight structs/enums used throughout
+// the simulator (time primitives, geodetic coordinates, power models, etc.).
+
 #pragma once
 
 #include <chrono>

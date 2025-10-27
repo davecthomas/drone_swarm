@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
+#include <utility>
 
 #include <spdlog/spdlog.h>
 
@@ -31,7 +32,7 @@ int main() {
             set_log_level(desired_level);
         }
 
-        SimulationRuntime runtime{configuration};
+        SimulationRuntime runtime{std::move(configuration)};
         runtime.initialize();
         runtime.run();
 

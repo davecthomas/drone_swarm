@@ -1,3 +1,9 @@
+// === Simulation Runtime ======================================================
+//
+// Coordinates initialization, update, and render loops for the simulator.
+// Responsible for wiring configuration, orchestrator, rendering pipeline, and
+// autonomous vehicles together.
+
 #pragma once
 
 #include <atomic>
@@ -13,18 +19,24 @@
 
 namespace drone_swarm {
 
+/** @brief High-level orchestrator managing update and render threads. */
 class SimulationRuntime final {
   public:
     explicit SimulationRuntime(Configuration configuration);
     ~SimulationRuntime();
 
+    /** @brief Initialize world state, vehicles, and rendering pipeline. */
     void initialize();
+    /** @brief Start background update/render loops. */
     void run();
+    /** @brief Shut down threads and release resources. */
     void shutdown();
 
   private:
+    /** @brief Tick loop updating vehicles and orchestrator. */
     void update_loop();
-    void render_loop();
+    /** @brief Rendering loop driving MapLibre presentation. */
+   void render_loop();
 
     Configuration configuration_;
     EarthRegion earth_region_;

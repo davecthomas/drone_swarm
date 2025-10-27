@@ -1,3 +1,7 @@
+// === Version Metadata ========================================================
+//
+// Exposes the simulator's semantic version string used in logs and UI.
+
 #pragma once
 
 #include <string_view>

@@ -1,3 +1,9 @@
+// === Drone Aircraft ==========================================================
+//
+// Specialization of AutonomousVehicle that models fixed-wing/rotorcraft
+// envelopes. Enforces altitude, climb/descent, and bank limits on top of the
+// generic kinematics provided by the base class.
+
 #pragma once
 
 #include "drone_swarm/autonomous_vehicle.hpp"

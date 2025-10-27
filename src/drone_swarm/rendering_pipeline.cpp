@@ -1,3 +1,22 @@
+// === Rendering Pipeline =====================================================
+//
+// Bridges simulation state into MapLibre GL Native for visualization. The
+// pipeline owns GLFW window management, adapts telemetry updates into GeoJSON
+// overlays, and coordinates MapLibre’s renderer/frontend abstractions.
+//
+// Key responsibilities
+// - Initialize and cache GLFW contexts (shared across threads) while obeying
+//   MapLibre’s threading expectations.
+// - Translate drone states into map layers (circle layers plus dynamic data
+//   sources) and handle camera choreography.
+// - Manage asynchronous style loading, caching, and tile provider selection via
+//   the TileProvider polymorphic interface.
+//
+// External dependencies
+// - MapLibre GL Native (renderer, style, GeoJSON convenience types).
+// - GLFW for OpenGL context/window lifecycle.
+// - `drone_swarm/tile_provider.hpp` for provider-specific descriptors.
+
 #include "drone_swarm/rendering_pipeline.hpp"
 
 #define GLFW_INCLUDE_NONE
@@ -35,7 +54,7 @@
 #include <string_view>
 
 #include "drone_swarm/logging.hpp"
-#include "drone_swarm/tile_service_factory.hpp"
+#include "drone_swarm/tile_provider.hpp"
 
 namespace drone_swarm {
 
@@ -302,14 +321,16 @@ mapbox::geojson::feature feature_from_state(const DroneState& state) {
 }  // namespace
 
 RenderingPipeline::RenderingPipeline(RenderingConfig config,
-                                     std::string mapbox_token,
-                                     TileProviderType tile_provider,
+                                     std::unique_ptr<TileProvider> tile_provider,
                                      std::filesystem::path cache_directory)
     : config_(config),
-      mapbox_token_(std::move(mapbox_token)),
-      tile_provider_(tile_provider),
+      tile_provider_(std::move(tile_provider)),
       cache_directory_(std::move(cache_directory)),
-      logger_(get_logger()) {}
+      logger_(get_logger()) {
+    if (tile_provider_ == nullptr) {
+        throw std::invalid_argument("RenderingPipeline requires a tile provider instance");
+    }
+}
 
 RenderingPipeline::~RenderingPipeline() {
     shutdown();
@@ -321,12 +342,14 @@ void RenderingPipeline::initialize() {
     }
     ensure_cache_directory();
 
+    const TileProviderType provider_type = tile_provider_->type();
     logger_->info(
-        "Starting MapLibre renderer ({}x{}, vsync={}, cache={})",
+        "Starting MapLibre renderer ({}x{}, vsync={}, cache={}, provider={})",
         config_.window_width_px,
         config_.window_height_px,
         config_.enable_vsync ? "true" : "false",
-        cache_directory_.string()
+        cache_directory_.string(),
+        provider_type == TileProviderType::Mapbox ? "mapbox" : "maplibre_demo"
     );
 
     stop_requested_.store(false, std::memory_order_relaxed);
@@ -381,7 +404,7 @@ void RenderingPipeline::map_thread_entry() {
     try {
         ensure_glfw_initialized();
 
-        const TileServiceDescriptor tile_service = make_tile_service_descriptor(tile_provider_, mapbox_token_);
+        const TileServiceDescriptor tile_service = tile_provider_->build_descriptor();
 
         GLFWwindow* window = glfwCreateWindow(
             config_.window_width_px,
@@ -396,15 +419,15 @@ void RenderingPipeline::map_thread_entry() {
         }
 
         DroneGLBackend backend(window, config_.enable_vsync);
-        SimpleRendererFrontend frontend(backend, backend.pixel_ratio());
+        SimpleRendererFrontend frontend(backend, static_cast<float>(backend.pixel_ratio()));
 
         PipelineMapObserver map_observer(*this);
 
         const auto cache_file = cache_directory_ / tile_service.cache_db_name;
         mbgl::ResourceOptions resource_options;
         resource_options.withCachePath(cache_file.string()).withTileServerOptions(tile_service.tile_server_options);
-        if (!mapbox_token_.empty()) {
-            resource_options.withApiKey(mapbox_token_);
+        if (tile_service.access_token && !tile_service.access_token->empty()) {
+            resource_options.withApiKey(*tile_service.access_token);
         }
 
         mbgl::ClientOptions client_options;

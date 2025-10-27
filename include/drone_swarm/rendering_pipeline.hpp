@@ -12,6 +12,7 @@
 #include "drone_swarm/camera_feed.hpp"
 #include "drone_swarm/drone_state.hpp"
 #include "drone_swarm/logging.hpp"
+#include "drone_swarm/tile_provider.hpp"
 #include "drone_swarm/types.hpp"
 
 namespace mbgl {
@@ -20,7 +21,7 @@ class Map;
 
 namespace drone_swarm {
 
-/** @brief Aggregates the viewport configuration used during renderer setup. */
+/** @brief Windowing and presentation settings for the rendering pipeline. */
 struct RenderingConfig final {
     int window_width_px{};  /**< Output surface width in pixels. */
     int window_height_px{}; /**< Output surface height in pixels. */
@@ -28,23 +29,24 @@ struct RenderingConfig final {
 };
 
 /** @brief Manages MapLibre rendering, tile acquisition, and scene composition. */
+/**
+ * @brief Owns GLFW/MapLibre integration and overlays live swarm telemetry.
+ */
 class RenderingPipeline final {
   public:
     /**
-     * @brief Construct a rendering pipeline for the provided configuration.
+     * @brief Construct pipeline infrastructure for the selected tile provider.
      *
-     * @param config Window and vsync parameters.
-     * @param mapbox_token Token used when Mapbox tiles are selected.
-     * @param tile_provider Active tile provider choice.
-     * @param cache_directory Cache directory where tile data is stored.
+     * @param config Window/presentation knobs.
+     * @param tile_provider Provider abstraction supplying MapLibre descriptors.
+     * @param cache_directory Directory where MapLibre should persist cache data.
      */
     RenderingPipeline(RenderingConfig config,
-                      std::string mapbox_token,
-                      TileProviderType tile_provider,
+                      std::unique_ptr<TileProvider> tile_provider,
                       std::filesystem::path cache_directory);
     ~RenderingPipeline();
 
-    /** @brief Initialise GLFW, MapLibre, and the rendering thread. */
+    /** @brief Initialize GLFW, MapLibre, and the rendering thread. */
     void initialize();
     /** @brief Render the latest swarm state and optional camera feed. */
     void render_scene(const std::vector<DroneState>& visible_drones, const std::optional<CameraFrame>& selected_camera_frame);
@@ -61,10 +63,9 @@ class RenderingPipeline final {
     /** @brief Ensure the tile cache directory exists on disk. */
     void ensure_cache_directory() const;
 
-    RenderingConfig config_;                 /**< Window configuration. */
-    std::string mapbox_token_;               /**< Token used for Mapbox tile requests. */
-    TileProviderType tile_provider_;         /**< Selected tile provider. */
-    std::filesystem::path cache_directory_;  /**< Cache directory for MapLibre assets. */
+    RenderingConfig config_;                       /**< Window configuration. */
+    std::unique_ptr<TileProvider> tile_provider_;  /**< Active tile provider implementation. */
+    std::filesystem::path cache_directory_;        /**< Cache directory for MapLibre assets. */
     std::atomic<bool> stop_requested_{false};/**< Flag signalling the render thread to exit. */
     std::thread map_thread_;                 /**< Background renderer thread. */
     std::shared_ptr<spdlog::logger> logger_; /**< Shared logger instance. */
@@ -72,7 +73,7 @@ class RenderingPipeline final {
     std::vector<DroneState> queued_states_;  /**< Pending drone states awaiting render. */
     bool states_dirty_{false};               /**< Tracks whether the GeoJSON layer needs refresh. */
     std::atomic<bool> style_ready_{false};   /**< Tracks whether MapLibre style is loaded. */
-    bool initialized_{false};                /**< Records whether initialise() has completed. */
+    bool initialized_{false};                /**< Records whether initialize() has completed. */
 };
 
 }  // namespace drone_swarm

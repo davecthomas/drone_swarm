@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 
 #include <spdlog/spdlog.h>
 
@@ -115,8 +116,7 @@ SimulationRuntime::SimulationRuntime(Configuration configuration)
       telemetry_bus_(),
       orchestrator_("primary", configuration_.orchestrator, telemetry_bus_),
       rendering_pipeline_(configuration_.rendering,
-                          configuration_.mapbox_token,
-                          configuration_.tile_provider,
+                          std::move(configuration_.tile_provider),
                           std::filesystem::path(configuration_.log_directory) / "map_cache"),
       logger_(get_logger()) {}
 

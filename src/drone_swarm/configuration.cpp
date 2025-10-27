@@ -1,12 +1,36 @@
+// === Configuration Loader ====================================================
+//
+// Centralizes parsing and validation of environment-driven settings that feed
+// the simulation runtime. This implementation provides a narrow interface
+// (`ConfigurationLoader`) that transforms raw environment variables into the
+// strongly-typed `Configuration` structure consumed by downstream modules.
+//
+// Responsibilities
+// - Enforce defaults and sane bounds for simulation knobs such as update
+//   cadence, region radius, and overwatch coverage parameters.
+// - Surface clear diagnostics via the logging subsystem whenever user input
+//   cannot be parsed or violates expectations.
+// - Shield the rest of the codebase from `std::getenv` lookups by returning a
+//   fully-populated configuration object.
+//
+// External dependencies
+// - `<cstdlib>` for environment access.
+// - `drone_swarm/logging.hpp` to emit structured warnings.
+// - `Configuration` types declared in the matching header.
+//
+// Note: This file intentionally avoids reading from disk; callers are expected
+// to populate the process environment ahead of time (e.g., VS Code launch
+// configuration or a shell-sourced `.env`).
+
 #include "drone_swarm/configuration.hpp"
 
-#include <algorithm>
-#include <cctype>
 #include <cstdlib>
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 
 #include "drone_swarm/logging.hpp"
+#include "drone_swarm/tile_provider.hpp"
 
 namespace drone_swarm {
 
@@ -70,9 +94,7 @@ Configuration ConfigurationLoader::load(const std::filesystem::path&) {
     auto logger = initialize_logger(config.log_directory);
     logger->info("Loading configuration from environment");
 
-    config.tile_provider = load_tile_provider();
-    const bool requires_mapbox_token = (config.tile_provider == TileProviderType::Mapbox);
-    config.mapbox_token = load_mapbox_token(requires_mapbox_token);
+    config.tile_provider = make_tile_provider();
     config.update_hz = load_update_hz();
 
     config.orchestrator.region_center = GeodeticCoordinate{32.7473, -117.1661, 30.0};
@@ -86,8 +108,9 @@ Configuration ConfigurationLoader::load(const std::filesystem::path&) {
     config.rendering.window_height_px = 1080;
     config.rendering.enable_vsync = true;
 
+    const TileProviderType provider_type = config.tile_provider->type();
     logger->info("Configuration loaded: tile_provider={} update_hz={} region_radius_m={} overwatch_height_m={}",
-                 config.tile_provider == TileProviderType::Mapbox ? "mapbox" : "maplibre_demo",
+                 provider_type == TileProviderType::Mapbox ? "mapbox" : "maplibre_demo",
                  config.update_hz,
                  config.orchestrator.region_radius_m,
                  config.orchestrator.overwatch_height_m);
@@ -95,41 +118,9 @@ Configuration ConfigurationLoader::load(const std::filesystem::path&) {
     return config;
 }
 
-std::string ConfigurationLoader::load_mapbox_token(bool required) {
-    const char* raw_token = std::getenv("MAPBOX_ACCESS_TOKEN");
-    if (raw_token == nullptr) {
-        if (required) {
-            throw std::runtime_error("MAPBOX_ACCESS_TOKEN not set; cannot initialize Mapbox tile service");
-        }
-        return {};
-    }
-    return std::string{raw_token};
-}
-
 double ConfigurationLoader::load_update_hz() {
     const double parsed_value = parse_double(std::getenv("DRONE_SIM_UPDATE_HZ"), k_default_update_hz);
     return parsed_value;
-}
-
-TileProviderType ConfigurationLoader::load_tile_provider() {
-    const char* raw_provider = std::getenv("DRONE_SIM_TILE_PROVIDER");
-    if (raw_provider == nullptr) {
-        return TileProviderType::Mapbox;
-    }
-
-    std::string provider_value{raw_provider};
-    std::transform(provider_value.begin(), provider_value.end(), provider_value.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-
-    if (provider_value == "mapbox") {
-        return TileProviderType::Mapbox;
-    }
-    if (provider_value == "maplibre_demo" || provider_value == "maplibre" || provider_value == "demo") {
-        return TileProviderType::MapLibreDemo;
-    }
-
-    throw std::runtime_error("Unsupported DRONE_SIM_TILE_PROVIDER value: " + provider_value);
 }
 
 }  // namespace drone_swarm

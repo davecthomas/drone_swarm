@@ -13,7 +13,7 @@ set(DRONE_SWARM_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/drone_swarm/rendering_pipeline.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/drone_swarm/simulation_runtime.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include/drone_swarm/logging.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/drone_swarm/tile_service_factory.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include/drone_swarm/tile_provider.hpp
 )
 
 set(DRONE_SWARM_SOURCES
@@ -29,7 +29,7 @@ set(DRONE_SWARM_SOURCES
     rendering_pipeline.cpp
     simulation_runtime.cpp
     logging.cpp
-    tile_service_factory.cpp
+    tile_provider.cpp
 )
 
 add_library(drone_swarm_lib ${DRONE_SWARM_HEADERS} ${DRONE_SWARM_SOURCES})

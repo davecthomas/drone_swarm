@@ -5,7 +5,7 @@ A macOS-native (Apple Silicon) simulation of autonomous drones collaborating in 
 ## Project Vision
 
 - Real-time visualization of drone swarms, overwatch nodes, and Earth regions using MapLibre GL Native (OpenGL backend) with Mapbox tiles via the provided token.
-- Default operational theatre initialises around San Diego with a 50-mile radius overlay for immediate situational awareness.
+- Default operational theater initializes around San Diego with a 50-mile radius overlay for immediate situational awareness.
 - Autonomous vehicle models that track range, kinematics, battery, waypoints, sensor payloads, and camera feeds while coordinating to avoid collisions.
 - Adaptive overwatch mesh that preserves coverage across large regions, repositions to heal gaps, and logs orchestration activity.
 - Production-grade tooling: C++23 core, CMake/Ninja builds, strict warnings-as-errors, sanitizers in CI, and notarized `.app` + `.dmg` packaging.
@@ -23,9 +23,9 @@ A macOS-native (Apple Silicon) simulation of autonomous drones collaborating in 
 ## Core Components
 
 1. **AutonomousVehicle** – Base agent abstraction with state for geodetic position, altitude, bearing, speed, remaining range, battery, payload metadata, mission waypoints, sensor suite, and camera feeds.
-2. **DroneAircraft** – Airborne specialisation adding flight envelope constraints, climb/descent rates, wind drift compensation, and airspace compliance rules.
+2. **DroneAircraft** – Airborne specialization adding flight envelope constraints, climb/descent rates, wind drift compensation, and airspace compliance rules.
 3. **CameraFeed** – Manages gimbal orientation, simulated video render targets, and caching of inactive feeds.
-4. **EarthRegion** – Represents the active theatre, manages map boxes, altitude reference, and provides rendering hooks into MapLibre.
+4. **EarthRegion** – Represents the active theater, manages map boxes, altitude reference, and provides rendering hooks into MapLibre.
 5. **OverwatchNode** – Fixed observer with spherical coverage, subscription to telemetry bus, activity logging, and gap detection heuristics.
 6. **OverwatchOrchestrator** – Places/repositions overwatch nodes to maintain mesh coverage, drives update cadence, and aggregates logs.
 7. **RenderingPipeline** – Coordinates MapLibre terrain, overlays drone states, and manages the GLFW/OpenGL presentation loop.
@@ -99,7 +99,7 @@ VS Code automatically injects the `.env` values during debug sessions; command-l
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 ```
 
-- Swap `Debug` for `Release` when you need an optimised build.
+- Swap `Debug` for `Release` when you need an optimized build.
 - Additional options:
   - `-DDRONE_SWARM_BUILD_TESTS=OFF` to skip unit tests.
   - `-S` and `-B` can be changed if you prefer a different build directory.
@@ -128,7 +128,7 @@ Runtime options leverage environment variables with sensible fallbacks:
 - `DRONE_SIM_UPDATE_HZ` (default: `1`) – simulation tick rate.
 - `DRONE_SIM_LOG_DIR` (default: `logs`) – structured log directory.
 - `DRONE_SIM_REGION_RADIUS_M` (default: `5000`) – operational radius in metres.
-- `DRONE_SIM_OVERWATCH_HEIGHT_M` and `DRONE_SIM_OVERWATCH_COVERAGE_M` to tune overwatch behaviour.
+- `DRONE_SIM_OVERWATCH_HEIGHT_M` and `DRONE_SIM_OVERWATCH_COVERAGE_M` to tune overwatch behavior.
 - `DRONE_SIM_TILE_PROVIDER` (default: `mapbox`) – select `mapbox` for Mapbox Raster Tiles or `maplibre_demo` for the public MapLibre demo style.
 
 Camera feeds render on demand when a drone is selected in the UI; other feeds remain cached.
@@ -146,11 +146,11 @@ Camera feeds render on demand when a drone is selected in the UI; other feeds re
 
 | Component                             | Role                                                                                                                       | Key Collaborators                                       |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `Configuration`                       | Loads environment variables (tile provider, tokens, logging, cadence) into strongly typed structs used across the runtime. | `SimulationRuntime`, `TileServiceFactory`               |
-| `TileServiceFactory`                  | Generates a `TileServiceDescriptor` that wires MapLibre to Mapbox Raster Tiles or the MapLibre demo style.                 | `RenderingPipeline`                                     |
-| `TileServiceDescriptor`               | Bundles tile server options, style URL, and cache DB name for the active provider.                                         | `RenderingPipeline`                                     |
-| `RenderingPipeline`                   | Owns GLFW, MapLibre, and the render loop; overlays drone states and selected camera feeds.                                 | `SimulationRuntime`, `TileServiceFactory`, `CameraFeed` |
-| `AutonomousVehicle` / `DroneAircraft` | Encapsulates agent behaviour, kinematics, energy usage, and telemetry updates.                                             | `TelemetryBus`, `RenderingPipeline`                     |
+| `Configuration`                       | Loads environment variables (tile provider, logging, cadence) into strongly typed structs used across the runtime.        | `SimulationRuntime`, `TileProvider`                     |
+| `TileProvider`                        | Abstracts vendor-specific authentication and builds `TileServiceDescriptor` instances consumed by MapLibre.               | `RenderingPipeline`                                     |
+| `TileServiceDescriptor`               | Bundles tile server options, style URL, cache DB name, and optional access token for the active provider.                  | `RenderingPipeline`                                     |
+| `RenderingPipeline`                   | Owns GLFW, MapLibre, and the render loop; overlays drone states and selected camera feeds.                                 | `SimulationRuntime`, `TileProvider`, `CameraFeed`       |
+| `AutonomousVehicle` / `DroneAircraft` | Encapsulates agent behavior, kinematics, energy usage, and telemetry updates.                                               | `TelemetryBus`, `RenderingPipeline`                     |
 | `TelemetryBus`                        | Thread-safe queue distributing telemetry events from vehicles to overwatch/orchestrator consumers.                         | Vehicles, `OverwatchOrchestrator`                       |
 | `OverwatchNode`                       | Tracks vehicles within coverage, flags stale data, and contributes to gap analysis.                                        | `OverwatchOrchestrator`                                 |
 | `OverwatchOrchestrator`               | Aggregates telemetry, manages overwatch mesh placement/adjustments, and logs activity.                                     | `OverwatchNode`, `TelemetryBus`                         |
@@ -181,14 +181,14 @@ ctest --output-on-failure --test-dir build
 
 ## Autonomy Loop
 
-Each simulation tick (default 1 Hz, orchestrator-configurable) follows a deterministic sequence so every subsystem stays synchronised:
+Each simulation tick (default 1 Hz, orchestrator-configurable) follows a deterministic sequence so every subsystem stays synchronized:
 
-1. **Sense & Predict** – Every autonomous vehicle refreshes GNSS/IMU pose, computes projected range from current battery and consumption model, and estimates collision envelopes against neighbours and geofences.
+1. **Sense & Predict** – Every autonomous vehicle refreshes GNSS/IMU pose, computes projected range from current battery and consumption model, and estimates collision envelopes against neighbors and geofences.
 2. **Plan & Actuate** – Vehicles reconcile mission objectives (next waypoint, loiter targets, return-to-base triggers) with avoidance constraints, producing a desired heading, altitude, and throttle profile that respects the vehicle’s kinematic and flight-envelope limits.
 3. **Execute & Capture** – Kinematic state and energy budgets are integrated over the tick, gimbal pose is updated, and on-demand camera feeds for the selected drone render a new frame for HUD display.
 4. **Publish Telemetry** – The refreshed `DroneState` (identifier, status, geodetic pose, speed, battery, remaining range, timestamp) is emitted onto the in-memory telemetry bus for overwatch consumers.
 5. **Overwatch Fusion** – Overwatch nodes absorb telemetry, log activity, and detect coverage gaps; the orchestrator applies bounded retries, repositions nodes when degradation is detected, and surfaces structured logs.
-6. **Visualise** – The rendering pipeline consumes the latest drone set, updates the MapLibre GeoJSON overlay, and projects the swarm and overwatch mesh above the San Diego operational theatre.
+6. **Visualize** – The rendering pipeline consumes the latest drone set, updates the MapLibre GeoJSON overlay, and projects the swarm and overwatch mesh above the San Diego operational theater.
 
 ## System Architecture
 
@@ -197,7 +197,7 @@ graph TD
     subgraph macOS_App["Drone Swarm Simulator (.app)"]
         Runtime["SimulationRuntime"]
         Renderer["RenderingPipeline (MapLibre + OpenGL)"]
-        TileSvc["TileServiceFactory"]
+        TileProvider["TileProvider (Mapbox / MapLibre Demo)"]
         Orchestrator["OverwatchOrchestrator"]
         Overwatch["OverwatchNode(s)"]
         Vehicles["AutonomousVehicle / DroneAircraft"]
@@ -214,10 +214,10 @@ graph TD
     Orchestrator --> Logging
     Vehicles --> Renderer
     Cameras --> Renderer
-    Renderer --> TileSvc
-    TileSvc --> MapLibreCore["MapLibre GL Native Core"]
+    Renderer --> TileProvider
+    TileProvider --> MapLibreCore["MapLibre GL Native Core"]
     Renderer -->|Terrain Tiles| MapLibreCore
-    MapLibreCore -->|Tile Requests| TileProvider["Tile Provider (Mapbox / MapLibre Demo)"]
+    MapLibreCore -->|Tile Requests| TileProvider
     Vehicles --> TelemetryBus["TelemetryBus"]
     Overwatch --> TelemetryBus
     TelemetryBus --> Orchestrator
@@ -227,29 +227,30 @@ graph TD
 
 ```mermaid
 classDiagram
-    class TileServiceFactory {
-        +TileServiceDescriptor make_tile_service_descriptor(TileProviderType, string)
-    }
-
     class TileServiceDescriptor {
         +mbgl::TileServerOptions tile_server_options
         +string style_url
         +string cache_db_name
+        +optional<string> access_token
     }
 
     class Configuration {
-        +string mapbox_token
-        +TileProviderType tile_provider
+        +unique_ptr<TileProvider> tile_provider
         +RenderingConfig rendering
         +OrchestratorConfig orchestrator
         +double update_hz
+    }
+
+    class TileProvider {
+        +TileServiceDescriptor build_descriptor()
+        +TileProviderType type()
     }
 
     class RenderingPipeline {
         +void initialize()
         +void render_scene(vector<DroneState>, optional<CameraFrame>)
         +void shutdown()
-        -TileProviderType tile_provider_
+        -unique_ptr<TileProvider> tile_provider_
     }
 
     class SimulationRuntime {
@@ -320,8 +321,8 @@ classDiagram
         +optional<TelemetryEvent> try_consume()
     }
 
-    TileServiceFactory --> TileServiceDescriptor
-    RenderingPipeline --> TileServiceFactory
+    TileProvider --> TileServiceDescriptor
+    RenderingPipeline --> TileProvider
     RenderingPipeline --> AutonomousVehicle
     SimulationRuntime --> RenderingPipeline
     SimulationRuntime --> OverwatchOrchestrator
@@ -331,7 +332,7 @@ classDiagram
     OverwatchNode "*" o-- "*" AutonomousVehicle
     OverwatchOrchestrator "1" o-- "*" OverwatchNode
     Configuration --> RenderingPipeline
-    Configuration --> TileProviderType
+    Configuration --> TileProvider
     TelemetryBus --> OverwatchOrchestrator
 ```
 
@@ -342,17 +343,19 @@ sequenceDiagram
     participant Main as main()
     participant Runtime as SimulationRuntime
     participant Config as ConfigurationLoader
-    participant TileFactory as TileServiceFactory
+    participant Provider as TileProvider
     participant Renderer as RenderingPipeline
     participant TileSvc as TileServiceDescriptor
     participant MapLibre as MapLibre Core
 
     Main->>Runtime: construct()
     Runtime->>Config: load()
-    Config-->>Runtime: Configuration
-    Runtime->>Renderer: construct(rendering, token, provider)
-    Renderer->>TileFactory: make_tile_service_descriptor(provider, token)
-    TileFactory-->>Renderer: TileServiceDescriptor
+    Config->>Provider: instantiate()
+    Provider-->>Config: TileProvider
+    Config-->>Runtime: Configuration (includes provider)
+    Runtime->>Renderer: construct(rendering, provider, cache)
+    Renderer->>Provider: build_descriptor()
+    Provider-->>Renderer: TileServiceDescriptor
     Renderer->>MapLibre: initialize backend + style
     Runtime-->>Main: ready()
     Main->>Runtime: run()
