@@ -15,7 +15,6 @@ namespace drone_swarm {
 namespace {
 
 constexpr char k_default_region_name[] = "default-region"; /**< Identifier applied to the primary operating region. */
-constexpr GeodeticCoordinate k_base_coordinate{32.7473, -117.1661, 30.0}; /**< 92103 launch/charge location. */
 constexpr GeodeticCoordinate k_julian_coordinate{33.0781, -116.6020, 45.0}; /**< Julian destination for demo mission. */
 constexpr double k_default_drone_speed_mps{40.0};           /**< Nominal cruise speed for simulated drones. */
 constexpr double k_default_drone_accel_mps2{5.0};           /**< Nominal acceleration capability. */

@@ -26,6 +26,7 @@ set(MLN_WITH_QT OFF CACHE BOOL "" FORCE)
 set(MLN_WITH_NODE OFF CACHE BOOL "" FORCE)
 set(MLN_WITH_METAL OFF CACHE BOOL "" FORCE)
 set(MLN_WITH_OPENGL ON CACHE BOOL "" FORCE)
+set(MLN_WITH_RTTI ON CACHE BOOL "" FORCE)
 set(MLN_WITH_WERROR OFF CACHE BOOL "" FORCE)
 set(MLN_WITH_WEBGPU OFF CACHE BOOL "" FORCE)
 set(MLN_WITH_VULKAN OFF CACHE BOOL "" FORCE)
@@ -84,6 +85,27 @@ if (NOT glm_POPULATED)
     add_library(glm INTERFACE)
     target_include_directories(glm INTERFACE ${glm_SOURCE_DIR})
 endif()
+
+# MapLibre Native brings along numerous auxiliary executables (test runners,
+# render benchmarks, CLI utilities) that are not needed for this simulator.
+# Mark them EXCLUDE_FROM_ALL so that the default "all" target in CMake-based
+# IDEs/clients does not waste cycles building them.
+foreach(_maplibre_aux_target
+    mbgl-test-runner
+    mbgl-benchmark-runner
+    mbgl-render-test-runner
+    mbgl-expression-test
+    mbgl-cache
+    mbgl-render
+    mbgl-offline
+    mbgl-glfw
+    mbgl-glfw-main
+    mbgl-render-test-runner-node
+)
+    if (TARGET ${_maplibre_aux_target})
+        set_target_properties(${_maplibre_aux_target} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    endif()
+endforeach()
 
 add_subdirectory(src/drone_swarm)
 add_subdirectory(apps/simulator)

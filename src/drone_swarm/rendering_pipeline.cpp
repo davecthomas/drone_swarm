@@ -117,6 +117,8 @@ std::string_view to_string(VehicleStatus status) {
             return "Charging";
         case VehicleStatus::Faulted:
             return "Faulted";
+        case VehicleStatus::LowPowerReturn:
+            return "LowPowerReturn";
     }
     return "Unknown";
 }
@@ -412,7 +414,7 @@ void RenderingPipeline::map_thread_entry() {
         map_observer,
         mbgl::MapOptions()
             .withSize(backend.getSize())
-            .withPixelRatio(backend.pixel_ratio())
+            .withPixelRatio(static_cast<float>(backend.pixel_ratio()))
             .withMapMode(mbgl::MapMode::Continuous),
             resource_options,
             client_options
