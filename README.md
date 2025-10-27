@@ -74,14 +74,24 @@ flowchart LR
 
 ### Environment Setup
 
-```bash
-cp config/env_template.txt .env            # optional: customise overrides
-export MAPBOX_ACCESS_TOKEN="<your-token>"  # defaults to template value
-export DRONE_SIM_LOG_LEVEL=info            # optional: trace|debug|info|warn|error
-export DRONE_SIM_TILE_PROVIDER=mapbox      # mapbox | maplibre_demo (defaults to mapbox)
-```
+1. Copy the template and customize it:
 
-Smart defaults allow you to skip most variables. Only `MAPBOX_ACCESS_TOKEN` is mandatory when the template token does not suit your needs.
+   ```bash
+   cp config/env_template.txt .env
+   ```
+
+   Keep the keys in `.env` aligned with `config/env_template.txt`; VS Code’s debugger reads this file via `.vscode/launch.json`, so new variables should be added to both places.
+
+2. Edit `.env` and supply your Mapbox token (replace the placeholder when the bundled development token is insufficient) plus any overrides you need.
+
+3. When running from a shell outside VS Code, load the variables before launching:
+
+   ```bash
+   source .env
+   # or: export $(grep -v '^#' .env | xargs)
+   ```
+
+VS Code automatically injects the `.env` values during debug sessions; command-line runs require you to export them manually.
 
 ### Configure
 

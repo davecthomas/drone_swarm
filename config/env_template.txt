@@ -1,4 +1,5 @@
 # Environment configuration template for Drone Swarm Simulator
+# Keep this list in sync with .vscode/launch.json and any automated tooling.
 # Copy to a local .env file during development and keep secrets out of source control.
 
 # MAPBOX_ACCESS_TOKEN controls access to tile services consumed by MapLibre GL Native.
